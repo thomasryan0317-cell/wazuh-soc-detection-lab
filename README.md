@@ -1,4 +1,4 @@
-[README.md](https://github.com/user-attachments/files/30947080/README.md)# Wazuh SOC Detection Lab — My First SOC Project
+# Wazuh SOC Detection Lab — My First SOC Project
 
 > A cloud-hosted Wazuh SIEM I built from a bare Ubuntu server, hardened, and then
 > attacked from a Kali machine over the public internet to test whether it would
@@ -28,8 +28,10 @@ came up fairly quiet, I set up a Wazuh SIEM on a VPS I already had, since my hom
 isn't set up at the moment. I hardened the OS so nobody else could log in, got the IP
 addressing assigned, and confirmed the VPS was public and reachable. Then I began
 sending brute-force login attempts against the server to test detection. All attempts
-failed, because I'd hardened the system to key-only SSH, so it no longer accepts
-passwords.
+failed. I'd set the system up for key-only SSH from the start — though, as I cover in
+**Challenges & Lessons**, I later found a config override had quietly left password
+authentication enabled during that first test, and I fixed it so the box is genuinely
+key-only now.
 
 ```
    ┌─────────────────────┐                             ┌──────────────────────────┐
@@ -83,8 +85,30 @@ sudo systemctl restart ssh
 Installed the Wazuh 4.14 all-in-one stack (manager + indexer + filebeat) on the VPS.
 
 ```bash
-curl -sO https://packages.wazuh.com/4.14/wazuh-install.sh
-sudo bash ./wazuh-install.sh -a
+# Download and run the all-in-one installer in one line
+curl -sO https://packages.wazuh.com/4.14/wazuh-install.sh && sudo bash ./wazuh-install.sh -a
+```
+```
+INFO: Starting Wazuh installation assistant. Wazuh version: 4.14.7
+INFO: Wazuh web interface port will be 443.
+INFO: --- Dependencies ---
+INFO: Wazuh repository added.
+INFO: --- Configuration files ---
+INFO: Generating the root certificate.
+INFO: Generating Wazuh indexer / Filebeat / dashboard certificates.
+INFO: Created wazuh-install-files.tar. It contains the Wazuh cluster ...
+```
+
+Then confirmed the core services actually came up — proof the stack stood up, not just
+that the installer claimed success — and pinned the version so an `apt upgrade` couldn't
+silently change it out from under me:
+
+```bash
+sudo systemctl status wazuh-indexer     # active (running)
+sudo systemctl status filebeat          # active (running)
+
+# Disable the Wazuh apt repo so an unattended upgrade can't change the SIEM version
+sudo sed -i "s/^enabled=1/enabled=0/" /etc/apt/sources.list.d/wazuh.list
 ```
 
 The all-in-one install self-monitors its own host, so it reports on the server it runs
@@ -92,6 +116,9 @@ on without a separate agent. While exploring whether to add a *separate* agent, 
 package conflict — `wazuh-agent conflicts with wazuh-manager` on the same box — which
 confirmed the single all-in-one design already covers host monitoring. I kept the
 single-node design and attacked it directly.
+
+> _Screenshot: `screenshots/wazuh-install.png` — installer completing and the
+> `wazuh-indexer` / `filebeat` services reporting `active (running)`._
 
 ### 3. Firewall (UFW)
 
@@ -133,8 +160,8 @@ would look like. I knew the movies were dramatized, but that image stuck with me
 started with a basic nmap scan to look for open ports. Seeing that only 22 (SSH) and
 443 (the dashboard) were open, while the other 998 showed as *filtered* — proof my
 firewall was silently dropping probes — I sent a series of brute-force login attempts
-against the server to see what the SIEM would detect. Spoiler: they all failed, thanks
-to the hardening from the initial setup.
+against the server to see what the SIEM would detect. Spoiler: they all failed — though
+the *why* turned out to be more nuanced than I first assumed (see **Challenges & Lessons**).
 
 **Recon — from Kali, over the public internet:**
 
@@ -230,6 +257,33 @@ and the rule worked.
 curl ifconfig.me       # returned an IPv6 address — UFW rejected the rule
 curl -4 ifconfig.me    # forced IPv4 — the allow-list rule was accepted
 ```
+
+The lesson I'm proudest of catching came from testing my own hardening instead of
+trusting it. After the initial setup I brute-forced my own SSH from Kali — and it still
+prompted for passwords. My `sshd_config` correctly said `PasswordAuthentication no`, but
+the server itself reported `yes`. The cause: SSH reads the drop-in files in
+`/etc/ssh/sshd_config.d/` *before* the main config and honors the **first** value it
+finds, and a cloud-init drop-in (`50-cloud-init.conf`) was setting `yes` ahead of my
+edit. I fixed it by adding an override that sorts earlier than the cloud-init file, shut
+the PAM prompt path as well, and — importantly — verified against the server's *actual*
+effective config with `sshd -T` rather than trusting the file:
+
+```bash
+sudo sshd -T | grep -i passwordauthentication      # -> passwordauthentication yes  (!)
+
+# Add an override read before the cloud-init drop-in, then re-check the EFFECTIVE config
+printf 'PasswordAuthentication no\nKbdInteractiveAuthentication no\n' | \
+  sudo tee /etc/ssh/sshd_config.d/00-hardening.conf
+sudo systemctl restart ssh
+sudo sshd -T | grep -iE "passwordauthentication|kbdinteractive"   # -> both 'no'
+```
+
+Re-running the brute force then failed with `Permission denied (publickey)` and no
+password prompt at all. The takeaway stuck with me: verify hardening from the outside,
+and check what the service is *actually* running, not just what the config file says.
+
+> _Screenshot: `screenshots/ssh-keyonly-verified.png` — brute force now refused with
+> `Permission denied (publickey)`, no password prompt._
 
 Throughout the build, when I got stuck, I used the resources available to me — AI
 tooling and documentation — to diagnose the errors. The key for me wasn't just getting
