@@ -193,7 +193,7 @@ Three things this scan proves:
   `/app/login`, and a `401 Unauthorized`). Being able to *read* what a scan returns —
   not just run it — is part of the job.
 
-> _Screenshot: `screenshots/nmap-recon.png` — the full nmap output from Kali._
+![nmap -sV scan from Kali — 998 ports filtered, only 22 and 443 open](screenshots/nmap-recon.png)
 
 ### The payoff
 
@@ -278,8 +278,7 @@ Re-running the brute force then failed with `Permission denied (publickey)` and 
 password prompt at all. The takeaway stuck with me: verify hardening from the outside,
 and check what the service is *actually* running, not just what the config file says.
 
-> _Screenshot: `screenshots/ssh-keyonly-verified.png` — brute force now refused with
-> `Permission denied (publickey)`, no password prompt._
+![SSH brute force refused with Permission denied (publickey) — no password prompt](screenshots/ssh-keyonly-verified.png)
 
 Throughout the build, when I got stuck, I used the resources available to me — AI
 tooling and documentation — to diagnose the errors. The key for me wasn't just getting
