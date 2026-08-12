@@ -197,29 +197,25 @@ Three things this scan proves:
 
 ### The payoff
 
-This was genuinely one of the most eye-opening experiences of my entire IT and
-cybersecurity journey. I'd sent maybe 5 to 10 brute-force login attempts and one nmap
-scan. But when I opened the dashboard after the SIEM had been online about 8 hours, I
-had over 5,700 events logged — 5,363 authentication failures against just 26 successes.
-I was expecting maybe a few hundred. It hit me that almost none of those were mine — the
-vast majority was real automated attack traffic hammering my public IP from across the
-internet, which the SIEM had been quietly catching the whole time. The 26 successes were
-my own key-based logins. Being able to filter the logs — failed attempts, successful
-logins, account changes — and separate the handful of legitimate events from thousands
-of hostile ones showed me beyond words how much this work is needed.
+This was genuinely one of the most eye-opening experiences of my entire IT and cybersecurity journey. I'd sent maybe 5 to 10 brute-force login attempts and one nmap scan. But when I opened the dashboard after the SIEM had been online about a week, I had over 15,700 events logged — 15,088 authentication failures against just 53 successes. I was expecting maybe a few hundred. It hit me that almost none of those were mine — the vast majority was real automated attack traffic hammering my public IP from across the internet, which the SIEM had been quietly catching the whole time. The 53 successes were my own key-based logins. Being able to filter the logs — failed attempts, successful logins, account changes — and separate the handful of legitimate events from thousands of hostile ones showed me beyond words how much this work is needed.
 
 The dashboard mapped the activity to specific Wazuh rules and MITRE ATT&CK techniques:
 
 | Rule | Description | MITRE ATT&CK |
 |------|-------------|--------------|
-| **5712** | SSHD brute force attempt | Brute Force |
 | **5710** | Attempted login with non-existent user | Password Guessing / SSH |
 
-> _Screenshot: `screenshots/dashboard-overview.png` — 24h Threat Hunting view
-> (~5,730 events, 5,363 auth failures, 26 successes, 0 level-12+)._
-> _Screenshot: `screenshots/rule-5712.png` — SSHD brute-force detection._
-> _Screenshot: `screenshots/rule-5710.png` — non-existent-user detection._
-> _Screenshot: `screenshots/mitre-landscape.png` — full MITRE ATT&CK breakdown._
+![Wazuh Threat Hunting dashboard showing ~15,000 detected authentication failures mapped to MITRE ATT&CK techniques](screenshots/threat-hunting-dashboard.png)
+
+*Threat Hunting dashboard from my single-node, all-in-one Wazuh deployment detecting simulated SSH attacks against itself — over 15,000 authentication failures across one week, mapped to MITRE ATT&CK techniques (Password Guessing, SSH, Brute Force, Valid Accounts, and more).*
+
+![SSH brute-force drill-down filtered to rule.id 5710 — 7,605 authentication failures](screenshots/ssh-bruteforce-drilldown.png)
+
+*Drilling down on rule.id 5710 to isolate SSH authentication failures — 7,605 events mapped to Password Guessing and SSH.*
+
+![Wazuh Overview page showing the platform's available security modules](screenshots/wazuh-overview.png)
+
+*The Wazuh overview showing the platform's available modules. This is a single-node lab, so no external agents are registered — all detections come from the SIEM host monitoring itself.*
 
 ---
 
