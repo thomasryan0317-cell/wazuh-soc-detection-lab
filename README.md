@@ -117,8 +117,6 @@ package conflict — `wazuh-agent conflicts with wazuh-manager` on the same box 
 confirmed the single all-in-one design already covers host monitoring. I kept the
 single-node design and attacked it directly.
 
-> _Screenshot: `screenshots/wazuh-install.png` — installer completing and the
-> `wazuh-indexer` / `filebeat` services reporting `active (running)`._
 
 ### 3. Firewall (UFW)
 
