@@ -295,7 +295,7 @@ solution.
 ISP changes my home dynamic IP, I lose dashboard access until I manually update the UFW
 rule. I want to write a script that detects the IP change and updates the firewall rule
 automatically, removing that manual step and the risk of locking myself out.~~ 
-Completed — implemented as vps_ip_updater.py, see the scripts folder," and make "scripts folder" a link to your /scripts directory.
+**Completed** — implemented as [`vps_ip_updater.py`](./scripts), documented in the [`/scripts`](./scripts) folder.
 
 After that, I'd like to build a script that analyzes the logs on a schedule and sorts
 them by category — attempted logins, successful logins, failed logins, and overall
