@@ -221,7 +221,7 @@ The dashboard mapped the activity to specific Wazuh rules and MITRE ATT&CK techn
 
 ## Analysis
 
-Looking at the results over the roughly 8-hour period the server was up and reporting,
+Looking at the results over the few days the server has been up and reporting,
 it really showed how much activity hits an exposed host. I doubt anyone's sitting there
 manually — this is botnets and automated bots constantly mapping the internet, probing
 for anything vulnerable and reporting back "this is a target" or "this can be exploited."
@@ -291,10 +291,11 @@ solution.
 
 ## Future Work
 
-The next addition to this project will be automating the IP whitelist. Right now, if my
+~~The next addition to this project will be automating the IP whitelist. Right now, if my
 ISP changes my home dynamic IP, I lose dashboard access until I manually update the UFW
 rule. I want to write a script that detects the IP change and updates the firewall rule
-automatically, removing that manual step and the risk of locking myself out.
+automatically, removing that manual step and the risk of locking myself out.~~ 
+Completed — implemented as vps_ip_updater.py, see the scripts folder," and make "scripts folder" a link to your /scripts directory.
 
 After that, I'd like to build a script that analyzes the logs on a schedule and sorts
 them by category — attempted logins, successful logins, failed logins, and overall
